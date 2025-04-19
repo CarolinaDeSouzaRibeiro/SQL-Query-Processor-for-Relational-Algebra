@@ -19,6 +19,8 @@ with gr.Blocks() as demo:
             grafo_otim = gr.HTML('')
             grafo = gr.HTML('')
 
+            gr.Markdown("## Ordem de execução")
+
         #comando do botao
         btn.click(test, inputs=[cmd_sql], outputs=[algeb_relac_otim, algeb_relac, grafo_otim, grafo])
 
