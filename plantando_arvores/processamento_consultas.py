@@ -1,4 +1,4 @@
-'''
+"""
 𝝿[E.LNAME](
    𝛔[(P.PNAME='AQUARIUS') ∧ (P.PNUMBER=W.PNO) ∧ (W.ESSN=E.SSN)](
       (EMPLOYEE[E] ⨝ WORKS_ON[W]) ⨝ PROJECT[P]
@@ -7,7 +7,7 @@
 
 Este módulo interpreta expressões de álgebra relacional similar à acima e gera a árvore de operações
 relacionais correspondente, visualizando-a com a biblioteca Graphviz.
-'''
+"""
 
 from graphviz import Digraph
 from typing import Optional
