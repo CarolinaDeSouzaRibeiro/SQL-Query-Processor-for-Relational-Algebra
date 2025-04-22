@@ -3,13 +3,17 @@ from plantando_arvores.processamento_consultas import processar_consulta
 
 
 def funcao_btn(comando):
-    #ALGEBRA RELACIONAL
-    algebra_relacional = comando #TODO: chamar funcao de algebra relacional
+    #CHECAGEM DA VALIDADE DO COMANDO SQL
+    if not comando: #TODO: substituir essa verificacao pela funcao de checagem do parser
+        raise gr.Error('Comando SQL inválido')
+    else:
+        #ALGEBRA RELACIONAL
+        algebra_relacional = comando #TODO: chamar funcao de algebra relacional
 
-    #GRAFOS
-    processar_consulta(algebra_relacional)#prepara grafos
+        #GRAFOS
+        processar_consulta(algebra_relacional)#prepara grafos
 
-    return algebra_relacional, 'arvore_consulta_processada.png', 'arvore_consulta_otimizada.png'
+        return algebra_relacional, 'arvore_consulta_processada.png', 'arvore_consulta_otimizada.png'
 
 with gr.Blocks() as demo:
     gr.Markdown("## Processador de consultas")
