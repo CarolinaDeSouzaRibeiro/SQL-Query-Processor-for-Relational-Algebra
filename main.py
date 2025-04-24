@@ -1,22 +1,25 @@
 import gradio as gr
 from plantando_arvores.processamento_consultas import gerar_imagem_arvore_processada
-
+from parser import process_sql_query
 
 def funcao_btn(comando):
     #CHECAGEM DA VALIDADE DO COMANDO SQL
-    if not comando: #TODO: substituir essa verificacao pela funcao de checagem do parser
+    try: #TODO: substituir essa verificacao pela funcao de checagem do parser
+        algebra_relacional = process_sql_query(comando)
+
+        #se a algebra relacional for vazia, dá erro
+        if not algebra_relacional:
+            raise gr.Error('Comando SQL inválido')
+    except Exception as e:
         raise gr.Error('Comando SQL inválido')
-    else:
-        #ALGEBRA RELACIONAL
-        algebra_relacional = comando #TODO: chamar funcao de algebra relacional
 
-        #GRAFOS
-        try:
-            gerar_imagem_arvore_processada(algebra_relacional)#prepara grafos
-        except Exception as e:
-            raise gr.Error('Erro na geração do grafo.\nCertifique-se que os executáveis do Graphviz estão instalados e no seu PATH') from e
+    #GRAFOS
+    try:
+        gerar_imagem_arvore_processada(algebra_relacional)#prepara grafos
+    except Exception as e:
+        raise gr.Error('Erro na geração do grafo.\nCertifique-se que os executáveis do Graphviz estão instalados e no seu PATH') from e
 
-        return algebra_relacional, 'arvore_consulta_processada.png', 'arvore_consulta_otimizada.png'
+    return algebra_relacional, 'arvore_consulta_processada.png', 'arvore_consulta_otimizada.png'
 
 with gr.Blocks() as demo:
     gr.Markdown("## Processador de consultas")
