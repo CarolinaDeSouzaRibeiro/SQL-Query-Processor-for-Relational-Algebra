@@ -1,165 +1,87 @@
 from .arvore import NoArvore, Arvore, ArvoreDrawer
-import re
-from typing import NoReturn, Tuple
-from banco_de_dados.definicao_banco.tabelas import tabelas
 
-def formatar_algebra_relacional(algebra: str) -> str:
-    algebra = re.sub(r'\s+', ' ', algebra)
-    algebra = re.sub(r'\(\s+', '(', algebra)
-    algebra = re.sub(r'\s+\)', ')', algebra)
-    algebra = re.sub(r'\[\s+', '[', algebra)
-    algebra = re.sub(r'\s+\]', ']', algebra)
-    return algebra
+def eh_operador_unario(token: str) -> bool:
+    return token.startswith("𝛔[") or token.startswith("𝝿[")
 
-def converter_algebra_em_arvore(algebra: str) -> Arvore:
-    validar_algebra(algebra)
-    algebra_formatada = formatar_algebra_relacional(algebra)
-    tokens = list(algebra_formatada)
-    raiz, _ = _parse(tokens)
+def eh_operador_binario(token: str) -> bool:
+    return token.startswith("⨝[") or token == "X"
+
+def extrair_subexpressao(expr: str, inicio: int) -> tuple[str, int]:
+    """Extrai a subexpressão entre parênteses e retorna ela com o índice de fim."""
+    contador = 1
+    fim = inicio + 1
+    while fim < len(expr):
+        if expr[fim] == '(':
+            contador += 1
+        elif expr[fim] == ')':
+            contador -= 1
+            if contador == 0:
+                break
+        fim += 1
+    return expr[inicio+1:fim], fim
+
+def construir_arvore(algebra: str) -> Arvore:
     arvore = Arvore()
-    arvore.raiz = raiz
+    arvore.raiz = _construir_no(algebra.strip())
     return arvore
 
-def _parse(tokens: list[str], pos: int = 0) -> Tuple[NoArvore, int]:
-    if tokens[pos] == '(':
-        pos += 1
-        esquerda, pos = _parse(tokens, pos)
-        if pos < len(tokens) and tokens[pos] == ')':
-            pos += 1
+def _construir_no(expr: str) -> NoArvore:
+    expr = expr.strip()
 
-        if pos < len(tokens):
-            if tokens[pos] == ' ':
-                pos += 1
+    # Caso mais simples: folha (ex: Cliente[C])
+    if not any(op in expr for op in ("𝝿", "𝛔", "⨝", "X")):
+        return NoArvore(expr)
 
-            if tokens[pos] == 'X':
-                pos += 1
-                if tokens[pos] == '(':
-                    pos += 1
-                direita, pos = _parse(tokens, pos)
-                if tokens[pos] == ')':
-                    pos += 1
-                raiz = NoArvore('X')
-                raiz.filho_esquerda = esquerda
-                raiz.filho_direita = direita
-                return raiz, pos
+    # Projeção ou Seleção: operador unário
+    if expr.startswith("𝝿[") or expr.startswith("𝛔["):
+        idx_fim_operador = expr.find("]") + 1
+        operador = expr[:idx_fim_operador]
+        resto = expr[idx_fim_operador:].strip()
+        if resto.startswith("("):
+            subexpr, _ = extrair_subexpressao(resto, 0)
+            no = NoArvore(operador)
+            no.filho_esquerda = _construir_no(subexpr)
+            return no
 
-            elif tokens[pos] == '⨝':
-                pos += 1
-                if tokens[pos] == '[':
-                    condicao, pos = _read_until_balanced(tokens, '[', ']', pos + 1)
-                    if tokens[pos] == ')':
-                        pos += 1
-                    if tokens[pos] == '(':
-                        pos += 1
-                    direita, pos = _parse(tokens, pos)
-                    if tokens[pos] == ')':
-                        pos += 1
-                    raiz = NoArvore(f"⨝[{condicao}]")
-                    raiz.filho_esquerda = esquerda
-                    raiz.filho_direita = direita
-                    return raiz, pos
+    # Junção ou Produto cartesiano: operador binário entre parênteses
+    if expr.startswith("("):
+        subexpr_esq, fim_esq = extrair_subexpressao(expr, 0)
+        resto = expr[fim_esq+1:].strip()
 
-        return esquerda, pos
-
-    conteudo = ""
-    while pos < len(tokens) and tokens[pos] not in ('(', ')'):
-        if tokens[pos] == '[':
-            conteudo += tokens[pos]
-            pos += 1
-            bloco, pos = _read_until_balanced(tokens, '[', ']', pos)
-            conteudo += bloco + ']'
+        # Detectar operador central
+        if resto.startswith("⨝["):
+            idx_fim_op = resto.find("]") + 1
+            operador = resto[:idx_fim_op]
+            resto_dir = resto[idx_fim_op:].strip()
+        elif resto.startswith("X"):
+            operador = "X"
+            resto_dir = resto[1:].strip()
         else:
-            conteudo += tokens[pos]
-            pos += 1
+            raise ValueError(f"Operador desconhecido em: {resto}")
 
-    no = NoArvore(conteudo.strip())
-    
-    # print(f"DEBUG: criando nó '{no.conteudo}'")
-
-    if pos < len(tokens) and tokens[pos] == '(':
-        pos += 1
-        no.filho_esquerda, pos = _parse(tokens, pos)
-        if pos < len(tokens) and tokens[pos] == ')':
-            pos += 1
-            
-    # Elimina nós intermediários vazios, criados apenas por parênteses desnecessários
-    if no.conteudo == "" and no.filho_esquerda and no.filho_direita is None:
-        return no.filho_esquerda, pos
-
-
-    return no, pos
-
-def _read_until_balanced(tokens: list[str], open_char: str, close_char: str, start_pos: int) -> Tuple[str, int]:
-    count = 1
-    result = ""
-    i = start_pos
-    while i < len(tokens) and count > 0:
-        char = tokens[i]
-        if char == open_char:
-            count += 1
-        elif char == close_char:
-            count -= 1
-        if count > 0:
-            result += char
-        i += 1
-    return result, i
-
-def validar_algebra(algebra: str) -> None | NoReturn:
-    algebra_formatada = formatar_algebra_relacional(algebra)
-    tokens = list(algebra_formatada)
-    _verificar_balanceamento(tokens)
-    _verificar_operadores_unarios(algebra_formatada)
-    _verificar_joins(algebra_formatada)
-    _verificar_produto_cartesiano(algebra_formatada)
-
-def _verificar_balanceamento(tokens: list[str]) -> None | NoReturn:
-    pilha = []
-    for i, char in enumerate(tokens):
-        if char in ('(', '['):
-            pilha.append(char)
-        elif char == ')':
-            if not pilha or pilha[-1] != '(':
-                raise ValueError(f"Parêntese fechado ')' sem abertura correspondente na posição {i}")
-            pilha.pop()
-        elif char == ']':
-            if not pilha or pilha[-1] != '[':
-                raise ValueError(f"Colchete fechado ']' sem abertura correspondente na posição {i}")
-            pilha.pop()
-    if pilha:
-        raise ValueError(f"Delimitadores não balanceados: {pilha}")
-
-def _verificar_operadores_unarios(algebra_formatada: str) -> None | NoReturn:
-    matches = re.findall(r'(𝝿|𝛔)\[[^\[\]]+\]\(', algebra_formatada)
-    if not matches:
-        if '𝝿' in algebra_formatada or '𝛔' in algebra_formatada:
-            raise ValueError("Operador unário encontrado, mas está malformado. Esperado: '𝝿[...](...)' ou '𝛔[...](...)'")
-
-def _verificar_joins(algebra_formatada: str) -> None | NoReturn:
-    if '⨝' in algebra_formatada:
-        if not re.search(r'\)\s*⨝\[[^\[\]]+\]\s*\(', algebra_formatada):
-            raise ValueError("Join malformado. Esperado: (expr) ⨝[cond] (expr)")
-
-def _verificar_produto_cartesiano(algebra_formatada: str) -> None | NoReturn:
-    if 'X' in algebra_formatada:
-        if not re.search(r'\)\s*X\s*\(', algebra_formatada):
-            raise ValueError("Produto cartesiano malformado. Esperado: (expr) X (expr)")
+        if not resto_dir.startswith("("):
+            raise ValueError(f"Expressão da direita inválida: {resto_dir}")
         
-if __name__ == '__main__':
-    algebra_relacional = """
-    𝝿[C.Nome, E.CEP, P.Status](
+        subexpr_dir, _ = extrair_subexpressao(resto_dir, 0)
+        no = NoArvore(operador)
+        no.filho_esquerda = _construir_no(subexpr_esq)
+        no.filho_direita = _construir_no(subexpr_dir)
+        return no
+
+    raise ValueError(f"Expressão inválida: {expr}")
+
+if __name__ == "__main__":
+    expr = '''𝝿[C.Nome, E.CEP, P.Status](
        𝛔[(C.TipoCliente = 4) ∧ (E.UF = "SP")](
             (
               (Cliente[C]) ⨝[C.idCliente = P.Cliente_idCliente] (Pedido[P])
             ) ⨝[C.idCliente = E.Cliente_idCliente] (Endereco[E])
        )
-    )"""
+    )'''
 
-    print(formatar_algebra_relacional(algebra_relacional))
+    arv = construir_arvore(expr)
+    print(arv.reconstruir_algebra_relacional())
+    desenhista: ArvoreDrawer = ArvoreDrawer(arv)
+    desenhista.desenhar("arvore")
+    print("Árvore desenhada e salva como 'arvore.png'.")
     
-    arvore = converter_algebra_em_arvore(algebra_relacional)
-    
-    print(formatar_algebra_relacional(arvore.reconstruir_algebra_relacional()))
-
-    drawer: ArvoreDrawer = ArvoreDrawer(arvore)
-    
-    drawer.desenhar("teste_processamento")
