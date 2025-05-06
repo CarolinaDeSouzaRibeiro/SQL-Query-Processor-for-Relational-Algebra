@@ -8,8 +8,6 @@ def funcao_btn(comando):
     try:
         algebra_relacional = process_sql_query(comando)
 
-        print(f'\nalgebra relacional tipo: {type(algebra_relacional)}\n\n')
-
         #se o resultado for um erro:
         if type(algebra_relacional) in [ValueError,KeyError]:
             raise gr.Error()
@@ -23,6 +21,7 @@ def funcao_btn(comando):
         raise gr.Error('Erro na geração do grafo.\nCertifique-se que os executáveis do Graphviz estão instalados e no seu PATH') from e
 
     return algebra_relacional, 'img/arvore_processada.png', 'img/arvore_otimizada.png'
+    # return algebra_relacional, 'arvore_consulta_processada.png', 'arvore_consulta_otimizada.png'
 
 with gr.Blocks() as demo:
     gr.Markdown("## Processador de consultas")
