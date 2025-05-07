@@ -916,3 +916,25 @@ if __name__ == "__main__":
         algebra = teste["expected_ra"]
         print(f"\n🧪 Testando {descricao}...")
         gerar_imagens(algebra, f"arvore_{descricao.lower()}")
+
+def gerar_imagem_arvore_processada(algebra_relacional: str):
+    """
+    Gera a imagem da árvore não-otimizada e salva em 'img/arvore_consulta_processada.png'.
+    """
+    from pathlib import Path
+    Path("img").mkdir(exist_ok=True)
+    arvore = converter_algebra_em_arvore(algebra_relacional)
+    # Salva como 'img/arvore_consulta_processada.png'
+    desenhar_arvore(arvore, "arvore_consulta_processada", nome_subpasta=None)
+
+def gerar_grafo_otimizado(algebra_relacional: str):
+    """
+    Gera a imagem da árvore otimizada (selects + projeções) e salva em 'img/arvore_consulta_otimizada.png'.
+    """
+    from pathlib import Path
+    Path("img").mkdir(exist_ok=True)
+    arvore = converter_algebra_em_arvore(algebra_relacional)
+    arvore_otimizada = otimizar_selects(arvore)
+    arvore_otimizada = otimizar_projecoes(arvore_otimizada)
+    # Salva como 'img/arvore_consulta_otimizada.png'
+    desenhar_arvore(arvore_otimizada, "arvore_consulta_otimizada", nome_subpasta=None)
