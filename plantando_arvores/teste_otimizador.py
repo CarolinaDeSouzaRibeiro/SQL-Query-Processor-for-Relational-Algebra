@@ -60,19 +60,20 @@ def _atributos_subarvore(no: NoArvore) -> Set[str]:
 
 # Passo 2 ──────────────────────────────────────────────────────────────────────
 def produto_para_join(no: NoArvore) -> NoArvore:
-    if not no.filhos:
-        return no
-    no.filhos = [produto_para_join(f) for f in no.filhos]
-
-    # procura padrão σ(cond) -> X
     if no.operacao.startswith("σ ") and len(no.filhos) == 1:
         filho = no.filhos[0]
         if filho.operacao == 'X':
             cond = no.operacao[2:].strip()
-            # converte: troca rótulo do filho e “puxa” cond para ele
-            filho.operacao = f"⨝ {cond}"
-            return filho  # elimina o σ separado
+            atrs_cond   = _atributos(cond)
+            atrs_esq    = _atributos_subarvore(filho.filhos[0])
+            atrs_dir    = _atributos_subarvore(filho.filhos[1])
+
+            # **Somente** se o predicado usa colunas dos DOIS lados
+            if atrs_cond & atrs_esq and atrs_cond & atrs_dir:
+                filho.operacao = f"⨝ {cond}"
+                return filho      # elimina o σ separado
     return no
+
 
 # Passo 3 ──────────────────────────────────────────────────────────────────────
 def push_projecoes(no: NoArvore, needed: Set[str] | None = None) -> NoArvore:
