@@ -128,7 +128,7 @@ def processar(s: str) -> NoArvore:
         elif nivel == 0 and (s[i] == '⨝' or s[i] == 'X'):
             esquerda = s[:i]
             direita = s[i+1:]
-            no = NoArvore('X')
+            no = NoArvore(f'{s[i]}')
             no.adicionar_filho(processar(esquerda.strip()))
             no.adicionar_filho(processar(direita.strip()))
             return no
