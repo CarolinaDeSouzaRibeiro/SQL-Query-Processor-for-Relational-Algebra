@@ -82,22 +82,67 @@ def empurrar_selecao(condicao: str, no: NoArvore) -> NoArvore:
     novo_no.adicionar_filho(no)
     return novo_no
 
+def reordenar_produto(no: NoArvore) -> NoArvore:
+    """
+    Reordena as operações de produto cartesiano/junção com base
+    em uma métrica simples (ex.: ordem alfabética dos alias das tabelas).
+    """
+    # Se o nó representa um join ou produto cartesiano e possui dois filhos...
+    if ("⨝" in no.operacao or "X" in no.operacao) and len(no.filhos) == 2:
+        # Ordena os filhos com base no menor alias encontrado em cada subárvore.
+        no.filhos = sorted(no.filhos, key=lambda x: min(coletar_tabelas(x)) if coletar_tabelas(x) else "")
+    
+    # Aplica recursivamente nos filhos.
+    for i in range(len(no.filhos)):
+        no.filhos[i] = reordenar_produto(no.filhos[i])
+    return no
+
+def adicionar_projecao(no: NoArvore, proj_dict: dict[str, list[str]]) -> NoArvore:
+    """
+    Insere operações de projeção imediatamente acima das folhas.
+    proj_dict define, para cada tabela (alias), quais colunas manter.
+    
+    Exemplo de proj_dict:
+       {"C": ["Nome"], "E": ["CEP"], "P": ["Status"]}
+    """
+    # Se o nó não possui filhos, é uma folha (tabela)
+    if not no.filhos:
+        tabelas = coletar_tabelas(no)
+        novo_no = no
+        for tabela in tabelas:
+            if tabela in proj_dict:
+                colunas = ", ".join(proj_dict[tabela])
+                # Cria um nó de projeção que filtra somente as colunas necessárias.
+                proj_no = NoArvore(f"π[{colunas}]")
+                proj_no.adicionar_filho(novo_no)
+                novo_no = proj_no
+        return novo_no
+    else:
+        # Se não é folha, percorre os filhos recursivamente.
+        for i in range(len(no.filhos)):
+            no.filhos[i] = adicionar_projecao(no.filhos[i], proj_dict)
+        return no
+
+# Exemplo de modificação na função otimizar_arvore para integrar as otimizações restantes:
 def otimizar_arvore(raiz: NoArvore) -> NoArvore:
     """
-        Otimiza a árvore de álgebra relacional aplicando técnicas de empurrar seleções e reordenar produtos cartesianos.
-
+        Otimiza a árvore de álgebra relacional aplicando:
+         - Empurrar seleções;
+         - Reordenar produtos cartesianos/junções;
+         - Inserir projeções acima das folhas.
+    
     - **Parâmetros**:
         - `raiz` (NoArvore): Nó raiz da árvore.
-
+    
     - **Retorno**:
         - `NoArvore`: Árvore otimizada.
     """
-
     if not raiz.operacao.startswith("π") and not raiz.operacao.startswith("σ"):
         return raiz
 
     if raiz.operacao.startswith("π"):
         raiz.filhos[0] = otimizar_arvore(raiz.filhos[0])
+        # Se desejar, é possível extrair as colunas da projeção principal para montar proj_dict.
         return raiz
 
     selecoes = []
@@ -108,12 +153,17 @@ def otimizar_arvore(raiz: NoArvore) -> NoArvore:
         atual = atual.filhos[0]
 
     subraiz = otimizar_arvore(atual)
-
     for cond in selecoes:
         subraiz = empurrar_selecao(cond, subraiz)
 
-    return subraiz
+    # Aplicando a reordenação de junções/produtos cartesianos.
+    subraiz = reordenar_produto(subraiz)
 
+    # Exemplo estático de projeção; no caso real, extraia as colunas da projeção principal.
+    proj_dict = {"C": ["Nome"], "E": ["CEP"], "P": ["Status"]}
+    subraiz = adicionar_projecao(subraiz, proj_dict)
+
+    return subraiz
 
 def gerar_imagem_arvore_otimizada(algebra_relacional: str) -> None:
     """
