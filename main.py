@@ -1,6 +1,6 @@
 import gradio as gr
-# from plantando_arvores.processamento_consultas import gerar_imagem_arvore_processada
-from novo_plantando_arvores.processamento import gerar_imagem_arvore_processada
+from plantando_arvores.processamento_consultas import gerar_imagem_arvore_processada
+# from novo_plantando_arvores.processamento import gerar_imagem_arvore_processada
 from parser import process_sql_query
 
 def funcao_btn(comando):
@@ -20,8 +20,8 @@ def funcao_btn(comando):
     except Exception as e:
         raise gr.Error('Erro na geração do grafo.\nCertifique-se que os executáveis do Graphviz estão instalados e no seu PATH') from e
 
-    return algebra_relacional, 'img/arvore_processada.png', 'img/arvore_otimizada.png'
-    # return algebra_relacional, 'arvore_consulta_processada.png', 'arvore_consulta_otimizada.png'
+    # return algebra_relacional, 'img/arvore_processada.png', 'img/arvore_otimizada.png'
+    return algebra_relacional, 'arvore_consulta_processada.png', 'arvore_consulta_otimizada.png'
 
 with gr.Blocks() as demo:
     gr.Markdown("## Processador de consultas")
