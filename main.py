@@ -1,7 +1,7 @@
 import gradio as gr
 import graphviz as gv
 from plantando_arvores.processamento_consultas import processar, gerar_imagem_arvore_processada, desenhar_arvore
-from plantando_arvores.teste_otimizador2 import gerar_grafo_otimizado
+from plantando_arvores.otimizador import gerar_grafo_otimizado
 # from novo_plantando_arvores.processamento import gerar_imagem_arvore_processada
 from parser import process_sql_query
 
