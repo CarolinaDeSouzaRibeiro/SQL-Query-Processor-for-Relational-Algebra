@@ -1,0 +1,12 @@
+// Árvore de Álgebra Relacional
+digraph {
+	1802636161552 [label="π[c.idcategoria,c.descricao,p.idproduto,p.nome,p.descricao,p.preco,p.quantestoque,p.categoria_idcategoria]"]
+	1802636161552 -> 1802636164816
+	1802636164816 [label="σ[c.idcategoria=p.categoria_idcategoria]"]
+	1802636164816 -> 1802636164048
+	1802636164048 [label=X]
+	1802636164048 -> 1802636161808
+	1802636161808 [label="categoria[c]"]
+	1802636164048 -> 1802636155664
+	1802636155664 [label="produto[p]"]
+}
