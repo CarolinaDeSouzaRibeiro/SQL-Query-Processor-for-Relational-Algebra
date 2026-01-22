@@ -2,9 +2,9 @@
 
 ## Introduction
 
-This project was developed as part of the Database subject, fulfilling the challenge proposed by the teacher: Implement an SQL query processor capable of analizing, validating, optimizing and vizualizing queries about a relational database on sales. The system parses restricted SQL commands, converts them into relational algebra, builds its corresponding operation tree, applies optimization heuristics(such as selection pushdown and projections) and generates gera graphic vizualizations of the trees before and after optimization. 
+This project was developed as part of the Database subject, fulfilling the challenge proposed by the teacher: Implement an SQL query parser capable of analizing, validating, optimizing and vizualizing queries about a relational database on sales. The system parses restricted SQL commands, converts them into relational algebra, builds its corresponding operation tree, applies optimization heuristics(such as selection pushdown and projections) and generates gera graphic vizualizations of the trees before and after optimization. 
 
-The objective is to demonstrate, in a practical and visual manner, the inner working of a query processor, as per the proposed requirements.
+The objective is to demonstrate, in a practical and visual manner, the inner working of a query parser, as per the proposed requirements.
 
 ## Installation
 
@@ -36,7 +36,7 @@ Here are some exemples and explainations on using this project:
    python banco_de_dados/definicao_banco/definicao_banco.py
    ```
 
-2. To process an SQL query and generate a relational algebra tree:
+2. To parse an SQL query and generate a relational algebra tree:
    ```sh
    python main.py
    ```
