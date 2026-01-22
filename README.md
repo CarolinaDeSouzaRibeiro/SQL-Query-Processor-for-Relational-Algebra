@@ -1,4 +1,4 @@
-# SQL-Query-Processor-for-Relational-Algebra
+# SQL-Query-Parser-for-Relational-Algebra
 
 ## Introduction
 
