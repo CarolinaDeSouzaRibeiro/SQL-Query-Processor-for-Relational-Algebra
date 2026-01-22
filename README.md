@@ -1,4 +1,4 @@
-# ProcConsultas
+# SQL-Query-Processor-for-Relational-Algebra
 
 ## Introduction
 
